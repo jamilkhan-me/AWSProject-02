@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Not Found</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --accent: #e8ff47;
+      --muted: #3a3a4a;
+      --text: #e2e2ee;
+      --dim: #6b6b88;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow: hidden;
+    }
+
+    /* Grid lines background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--muted) 1px, transparent 1px),
+        linear-gradient(90deg, var(--muted) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Radial glow */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(232,255,71,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      padding: 48px;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Giant 404 */
+    .num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(140px, 22vw, 320px);
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--muted);
+      position: relative;
+      user-select: none;
+    }
+
+    .num .highlight {
+      -webkit-text-stroke: 1.5px var(--accent);
+      color: transparent;
+      position: relative;
+    }
+
+    .num .highlight::after {
+      content: attr(data-char);
+      position: absolute;
+      inset: 0;
+      color: var(--accent);
+      opacity: 0.08;
+      -webkit-text-stroke: 0;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--bg);
+      background: var(--accent);
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+
+    .status-line {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    .message {
+      font-size: clamp(14px, 2vw, 16px);
+      color: var(--dim);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 40px;
+    }
+
+    .message em {
+      font-style: italic;
+      color: var(--text);
+    }
+
+    /* Path display */
+    .path-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--muted);
+      padding: 10px 16px;
+      border-radius: 4px;
+      margin-bottom: 40px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .path-prefix {
+      color: var(--dim);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .path-value {
+      color: var(--accent);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 3px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      background: #fff;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--muted);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text);
+    }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--muted);
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* Entrance animations */
+    .num, .label-row, .message, .path-box, .actions {
+      animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .label-row { animation-delay: 0.1s; }
+    .message   { animation-delay: 0.18s; }
+    .path-box  { animation-delay: 0.24s; }
+    .actions   { animation-delay: 0.3s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 32px 24px; }
+      .footer span:last-child { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <main class="main">
+      <div class="num">
+        <span class="highlight" data-char="4">4</span>0<span class="highlight" data-char="4">4</span>
+      </div>
+
+      <div class="label-row">
+        <span class="tag">Error</span>
+        <span class="status-line">Page not found</span>
+      </div>
+
+      <p class="message">
+        The page you're looking for <em>doesn't exist</em> — it may have been moved,
+        deleted, or the URL might have a typo.
+      </p>
+
+      <div class="path-box">
+        <span class="path-prefix">requested →</span>
+        <span class="path-value" id="requested-path">/</span>
+      </div>
+
+      <div class="actions">
+        <a href="/" class="btn btn-primary">↖ Go home</a>
+        <a href="javascript:history.back()" class="btn btn-secondary">← Go back</a>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span><span class="dot"></span> &nbsp;HTTP 404</span>
+      <span id="ts"></span>
+    </footer>
+  </div>
+
+  <script>
+    // Show the requested path
+    const pathEl = document.getElementById('requested-path');
+    pathEl.textContent = window.location.pathname || '/';
+
+    // Timestamp
+    document.getElementById('ts').textContent = new Date().toUTCString();
+  </script>
+</body>
+</html>

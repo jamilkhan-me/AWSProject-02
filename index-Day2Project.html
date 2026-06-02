@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jamil Khan · Cloud Infrastructure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #050508;
+    --surface: #0d0d14;
+    --surface2: #13131e;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e2e0f0;
+    --muted: #6e6c85;
+    --accent: #7b61ff;
+    --accent2: #a78bfa;
+    --cyan: #22d3ee;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --mono: 'Space Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ── Canvas starfield ── */
+  #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+  /* ── Noise overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  /* ── Radial glow behind content ── */
+  .glow-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-orb.one { width: 600px; height: 600px; background: rgba(123,97,255,0.12); top: -100px; left: -100px; }
+  .glow-orb.two { width: 500px; height: 500px; background: rgba(34,211,238,0.07); bottom: -50px; right: -100px; }
+
+  /* ── Layout ── */
+  main { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1.5rem 4rem; }
+
+  /* ── Status bar (top) ── */
+  .status-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    height: 44px;
+    background: rgba(5,5,8,0.7);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .status-bar .left { display: flex; align-items: center; gap: 1.5rem; }
+  .status-bar .right { display: flex; align-items: center; gap: 1.5rem; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); display: inline-block; animation: pulse-dot 2s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Hero ── */
+  .hero { max-width: 820px; width: 100%; text-align: center; margin-top: 3rem; }
+
+  .series-label {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 2.5rem;
+    padding: 6px 14px;
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 20px;
+    background: rgba(123,97,255,0.06);
+    animation: fade-up 0.6s ease both;
+  }
+  .series-label::before { content: '▶'; font-size: 9px; }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    animation: fade-up 0.6s ease 0.1s both;
+  }
+  h1 .line1 { display: block; color: var(--text); }
+  h1 .line2 { display: block; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.25); }
+  h1 .line3 { display: block; background: linear-gradient(135deg, var(--accent) 0%, var(--cyan) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .hero-sub {
+    font-size: 14px; color: var(--muted); max-width: 520px; margin: 0 auto 3rem;
+    line-height: 1.8;
+    animation: fade-up 0.6s ease 0.2s both;
+  }
+
+  /* ── Terminal badge ── */
+  .terminal-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px;
+    padding: 10px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--green);
+    margin-bottom: 4rem;
+    animation: fade-up 0.6s ease 0.3s both;
+    position: relative;
+    overflow: hidden;
+  }
+  .terminal-badge::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+    background: var(--green);
+  }
+  .terminal-badge .prompt { color: var(--muted); }
+  .cursor { display: inline-block; width: 8px; height: 14px; background: var(--green); animation: blink 1.2s step-end infinite; vertical-align: middle; margin-left: 2px; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── Feature grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    max-width: 820px; width: 100%;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 4rem;
+    animation: fade-up 0.6s ease 0.4s both;
+  }
+  .grid-item {
+    background: var(--surface);
+    padding: 1.75rem 1.5rem;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .grid-item::before {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(123,97,255,0.08) 0%, transparent 70%);
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .grid-item:hover::before { opacity: 1; }
+  .grid-item:hover { background: var(--surface2); }
+  .grid-item .gi-tag {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .grid-item .gi-tag::before { content: ''; display: block; width: 16px; height: 1px; background: var(--accent2); }
+  .grid-item h3 { font-family: var(--display); font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+  .grid-item p { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  /* ── Stats row ── */
+  .stats {
+    display: flex; gap: 0;
+    max-width: 820px; width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 4rem;
+    animation: fade-up 0.6s ease 0.5s both;
+  }
+  .stat {
+    flex: 1;
+    padding: 1.5rem;
+    border-right: 1px solid var(--border);
+    text-align: center;
+    background: var(--surface);
+    transition: background 0.2s;
+  }
+  .stat:last-child { border-right: none; }
+  .stat:hover { background: var(--surface2); }
+  .stat .val {
+    font-family: var(--display);
+    font-size: 2rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--cyan) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat .key { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+  /* ── Tech stack ── */
+  .stack {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+    max-width: 820px; width: 100%;
+    margin-bottom: 4rem;
+    animation: fade-up 0.6s ease 0.6s both;
+  }
+  .stack-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    font-size: 12px; color: var(--muted);
+    transition: all 0.2s;
+  }
+  .stack-item:hover { color: var(--text); border-color: rgba(123,97,255,0.4); background: rgba(123,97,255,0.06); }
+  .stack-item .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .stack-item .dot.cyan { background: var(--cyan); }
+  .stack-item .dot.green { background: var(--green); }
+  .stack-item .dot.amber { background: var(--amber); }
+
+  /* ── Code block ── */
+  .code-window {
+    max-width: 820px; width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 4rem;
+    animation: fade-up 0.6s ease 0.7s both;
+  }
+  .code-window .titlebar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .titlebar-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .titlebar-dot.r { background: #ff5f57; }
+  .titlebar-dot.y { background: #ffbd2e; }
+  .titlebar-dot.g { background: #28c840; }
+  .titlebar-filename { font-size: 12px; color: var(--muted); margin-left: 6px; }
+  .code-window pre {
+    padding: 1.5rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    color: #aeacc8;
+  }
+  .kw { color: var(--accent2); }
+  .st { color: #86efac; }
+  .cm { color: var(--muted); font-style: italic; }
+  .cn { color: var(--cyan); }
+
+  /* ── Footer ── */
+  .footer {
+    font-size: 11px; color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.06em;
+    animation: fade-up 0.6s ease 0.8s both;
+  }
+  .footer a { color: var(--accent2); text-decoration: none; }
+  .footer .heart { color: #f87171; }
+
+  /* ── Animations ── */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Scanline on hover ── */
+  .grid-item .scanline {
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    transform: translateY(-1px);
+    transition: transform 0.6s;
+    opacity: 0;
+  }
+  .grid-item:hover .scanline { opacity: 1; transform: translateY(0); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    h1 { font-size: clamp(2.5rem, 12vw, 4rem); }
+    .stats { flex-direction: column; }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); }
+    .stat:last-child { border-bottom: none; }
+    .status-bar .right { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+<div class="glow-orb one"></div>
+<div class="glow-orb two"></div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <div class="left">
+    <span><span class="status-dot"></span></span>
+    <span>SYSTEM STATUS: OPERATIONAL</span>
+    <span id="uptime-display">UPTIME: 00:00:00</span>
+  </div>
+  <div class="right">
+    <span id="clock-display">--:--:-- UTC</span>
+    <span>S3 + CLOUDFRONT</span>
+  </div>
+</div>
+
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="series-label">30 Days of AWS · Day 2 of 30</div>
+    <h1>
+      <span class="line1">Cloud</span>
+      <span class="line2">Infrastructure</span>
+      <span class="line3">Deployed.</span>
+    </h1>
+    <p class="hero-sub">
+      This page is served globally from Amazon S3 via CloudFront CDN — 
+      no servers, no OS to patch, 400+ edge locations, and a 99.99% SLA.
+      Built by <strong>Jamil Khan</strong> as part of the #30DaysOfAWS challenge.
+    </p>
+
+    <div class="terminal-badge">
+      <span class="prompt">aws s3 sync ./site s3://jamil-day2-website --delete</span>
+      <span class="cursor"></span>
+    </div>
+  </div>
+
+  <!-- Feature grid -->
+  <div class="grid" id="feature-grid">
+    <div class="grid-item">
+      <div class="scanline"></div>
+      <div class="gi-tag">Origin</div>
+      <h3>Amazon S3</h3>
+      <p>Static assets stored in an S3 bucket with versioning enabled. Bucket is private — accessible only via CloudFront OAC.</p>
+    </div>
+    <div class="grid-item">
+      <div class="scanline"></div>
+      <div class="gi-tag">CDN</div>
+      <h3>CloudFront</h3>
+      <p>Global CDN with 400+ edge locations. HTTP auto-redirects to HTTPS. Free TLS cert via ACM. Sub-10ms cache hits.</p>
+    </div>
+    <div class="grid-item">
+      <div class="scanline"></div>
+      <div class="gi-tag">Security</div>
+      <h3>Origin Access Control</h3>
+      <p>OAC policy ensures only this CloudFront distribution can read from S3. Bucket is never exposed to public internet.</p>
+    </div>
+    <div class="grid-item">
+      <div class="scanline"></div>
+      <div class="gi-tag">DNS</div>
+      <h3>Route 53</h3>
+      <p>Alias record pointing to the CloudFront distribution. Zero-latency DNS resolution with health check failover.</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="val" id="stat-latency">—</div>
+      <div class="key">Page load (ms)</div>
+    </div>
+    <div class="stat">
+      <div class="val">400+</div>
+      <div class="key">Edge locations</div>
+    </div>
+    <div class="stat">
+      <div class="val">$0.00</div>
+      <div class="key">Hosting cost (free tier)</div>
+    </div>
+    <div class="stat">
+      <div class="val">99.99%</div>
+      <div class="key">S3 SLA</div>
+    </div>
+  </div>
+
+  <!-- Stack tags -->
+  <div class="stack">
+    <div class="stack-item"><span class="dot"></span> Amazon S3</div>
+    <div class="stack-item"><span class="dot cyan"></span> CloudFront CDN</div>
+    <div class="stack-item"><span class="dot green"></span> ACM (TLS)</div>
+    <div class="stack-item"><span class="dot amber"></span> Route 53</div>
+    <div class="stack-item"><span class="dot"></span> Origin Access Control</div>
+    <div class="stack-item"><span class="dot cyan"></span> S3 Versioning</div>
+    <div class="stack-item"><span class="dot green"></span> Cache Invalidation</div>
+    <div class="stack-item"><span class="dot amber"></span> SAA-C03 Certified</div>
+  </div>
+
+  <!-- Code window -->
+  <div class="code-window">
+    <div class="titlebar">
+      <div class="titlebar-dot r"></div>
+      <div class="titlebar-dot y"></div>
+      <div class="titlebar-dot g"></div>
+      <span class="titlebar-filename">bucket-policy.json · CloudFront OAC</span>
+    </div>
+    <pre>{
+  <span class="kw">"Version"</span>: <span class="st">"2012-10-17"</span>,
+  <span class="kw">"Statement"</span>: [{
+    <span class="kw">"Sid"</span>: <span class="st">"AllowCloudFrontServicePrincipal"</span>,
+    <span class="kw">"Effect"</span>: <span class="st">"Allow"</span>,
+    <span class="kw">"Principal"</span>: { <span class="kw">"Service"</span>: <span class="st">"cloudfront.amazonaws.com"</span> },
+    <span class="kw">"Action"</span>: <span class="st">"s3:GetObject"</span>,
+    <span class="kw">"Resource"</span>: <span class="st">"arn:aws:s3:::jamil-day2-website/*"</span>,
+    <span class="cm">// Only THIS CloudFront distribution can access the bucket</span>
+    <span class="kw">"Condition"</span>: {
+      <span class="kw">"StringEquals"</span>: {
+        <span class="cn">"AWS:SourceArn"</span>: <span class="st">"arn:aws:cloudfront::ACCOUNT:distribution/ID"</span>
+      }
+    }
+  }]
+}</pre>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Built with <span class="heart">♥</span> by <a href="#">Jamil Khan</a> &nbsp;·&nbsp;
+    Part of <a href="#">#30DaysOfAWS</a> &nbsp;·&nbsp;
+    Hosted on Amazon S3 + CloudFront
+  </div>
+
+</main>
+
+<script>
+/* ── Starfield ── */
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 180; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random(),
+      speed: Math.random() * 0.004 + 0.001,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    s.a = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(220, 218, 255, ${s.a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+
+window.addEventListener('resize', () => { resize(); initStars(); });
+resize(); initStars();
+requestAnimationFrame(drawStars);
+
+/* ── Clock ── */
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getUTCHours()).padStart(2,'0');
+  const m = String(now.getUTCMinutes()).padStart(2,'0');
+  const s = String(now.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('clock-display').textContent = `${h}:${m}:${s} UTC`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ── Uptime counter ── */
+const startTime = Date.now();
+function updateUptime() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const h = String(Math.floor(elapsed / 3600)).padStart(2,'0');
+  const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2,'0');
+  const s = String(elapsed % 60).padStart(2,'0');
+  document.getElementById('uptime-display').textContent = `UPTIME: ${h}:${m}:${s}`;
+}
+setInterval(updateUptime, 1000);
+
+/* ── Page load stat ── */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const t = Math.round(performance.now());
+    document.getElementById('stat-latency').textContent = t;
+  }, 100);
+});
+
+/* ── Mouse glow on grid cards ── */
+document.querySelectorAll('.grid-item').forEach(item => {
+  item.addEventListener('mousemove', e => {
+    const r = item.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%';
+    const y = ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%';
+    item.style.setProperty('--mx', x);
+    item.style.setProperty('--my', y);
+  });
+});
+
+/* ── Typing animation for terminal badge ── */
+const fullText = 'aws s3 sync ./site s3://jamil-day2-website --delete';
+const promptEl = document.querySelector('.terminal-badge .prompt');
+let charIndex = 0;
+promptEl.textContent = '';
+
+function typeChar() {
+  if (charIndex < fullText.length) {
+    promptEl.textContent += fullText[charIndex];
+    charIndex++;
+    setTimeout(typeChar, 35 + Math.random() * 40);
+  }
+}
+
+setTimeout(typeChar, 1200);
+</script>
+</body>
+</html>
